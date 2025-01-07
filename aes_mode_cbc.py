@@ -187,6 +187,45 @@ def plot_difference_histogram(image1_path, image2_path):
     plt.legend()
     plt.show()
 
+def plot_rgb_correlation_scatter(image_path, title_prefix="Original"):
+    img = Image.open(image_path)
+    img_array = np.array(img)
+    
+    directions = ['Horizontal', 'Vertical', 'Diagonal']
+    colors = ['red', 'green', 'blue']
+    channel_names = ['R', 'G', 'B']
+    
+    fig, axs = plt.subplots(3, 3, figsize=(18, 12))
+    fig.suptitle(f"{title_prefix} - RGB Correlation Scatter Plots", fontsize=16)
+    
+    for channel_idx, channel in enumerate(channel_names):
+        for dir_idx, direction in enumerate(directions):  # Use dir_idx instead of overwriting i
+            x = []
+            y = []
+            height, width = img_array.shape[:2]
+            for _ in range(2000):  # Sample 2000 random points
+                i = np.random.randint(0, height - 1)
+                j = np.random.randint(0, width - 1)
+                
+                if direction == 'Horizontal' and j < width - 1:
+                    x.append(img_array[i, j, channel_idx])
+                    y.append(img_array[i, j + 1, channel_idx])
+                elif direction == 'Vertical' and i < height - 1:
+                    x.append(img_array[i, j, channel_idx])
+                    y.append(img_array[i + 1, j, channel_idx])
+                elif direction == 'Diagonal' and i < height - 1 and j < width - 1:
+                    x.append(img_array[i, j, channel_idx])
+                    y.append(img_array[i + 1, j + 1, channel_idx])
+            
+            ax = axs[channel_idx, dir_idx]  # Access correct subplot using dir_idx
+            ax.scatter(x, y, s=1, color=colors[channel_idx], alpha=0.5)
+            ax.set_title(f"{channel} - {direction}")
+            ax.set_xlabel("Pixel Intensity (X)")
+            ax.set_ylabel("Pixel Intensity (Y)")
+    
+    plt.tight_layout(rect=[0, 0, 1, 0.95])  # Adjust for suptitle spacing
+    plt.show()
+
 
 png_image = Image.open("baboon.png")
 png_image.save("baboon.bmp", format="BMP")
@@ -204,6 +243,8 @@ iv = b"1111222233334444"
  # AES.MODE_CTR = 6
  # AES.MODE_OPENPGP = 7
 
+#mode = AES.MODE_OFB
+#mode = AES.MODE_CFB
 mode = AES.MODE_CBC
 c = Init_Cipher(key,mode, iv)
 
@@ -227,6 +268,11 @@ encrypted_rgb_corr = calculate_rgb_correlation("e_baboon_cbc.bmp")
 
 print("Original RGB Correlations:", original_rgb_corr)
 print("Encrypted RGB Correlations:", encrypted_rgb_corr)
+
+# Plot correlation scatter plots for Original and Encrypted images
+plot_rgb_correlation_scatter("baboon.bmp", "Original Image")
+plot_rgb_correlation_scatter("e_baboon_cbc.bmp", "Encrypted Image")
+
 
 
 # Compute entropy for original and encrypted images

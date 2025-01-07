@@ -181,6 +181,47 @@ def calculate_uaci(image1_path, image2_path):
     uaci = np.sum(diff) / (img1.shape[0] * img1.shape[1] * img1.shape[2] * 255) * 100
     return uaci
 
+def plot_rgb_correlation_scatter(image_path, title_prefix=""):
+    """
+    Plot RGB correlation scatter plots (Diagonal, Vertical, Horizontal) for an image.
+    
+    Parameters:
+        image_path (str): Path to the image file.
+        title_prefix (str): Prefix for plot titles (e.g., 'Original' or 'Encrypted').
+    """
+    img = Image.open(image_path)
+    img_array = np.array(img)
+    directions = ['Diagonal', 'Vertical', 'Horizontal']
+    colors = ['B', 'R', 'G']
+    color_map = {'B': 'blue', 'R': 'red', 'G': 'green'}
+    fig, axs = plt.subplots(3, 3, figsize=(15, 12))
+    
+    for channel_idx, color in enumerate(colors):
+        channel_data = img_array[:, :, channel_idx]
+        height, width = channel_data.shape
+        
+        pixel_pairs = {'Diagonal': [], 'Vertical': [], 'Horizontal': []}
+        for _ in range(2000):
+            i = np.random.randint(0, height - 1)
+            j = np.random.randint(0, width - 1)
+            pixel_pairs['Diagonal'].append((channel_data[i, j], channel_data[i + 1, j + 1]))
+            pixel_pairs['Vertical'].append((channel_data[i, j], channel_data[i + 1, j]))
+            pixel_pairs['Horizontal'].append((channel_data[i, j], channel_data[i, j + 1]))
+        
+        for dir_idx, direction in enumerate(directions):
+            x, y = zip(*pixel_pairs[direction])
+            axs[channel_idx, dir_idx].scatter(x, y, s=1, color=color_map[color])
+            corr_coeff = np.corrcoef(x, y)[0, 1]
+            axs[channel_idx, dir_idx].set_title(
+                f"{title_prefix} {color} {direction}: r = {corr_coeff:.4f}"
+            )
+            axs[channel_idx, dir_idx].set_xlabel('Pixel Value i')
+            axs[channel_idx, dir_idx].set_ylabel('Pixel Value j')
+    
+    plt.tight_layout()
+    plt.show()
+
+
 
 png_image = Image.open("baboon.png")
 png_image.save("baboon.bmp", format="BMP")
@@ -214,6 +255,14 @@ encrypted_rgb_corr = calculate_rgb_correlation("e_baboon_ecb.bmp")
 
 print("Original RGB Correlations:", original_rgb_corr)
 print("Encrypted RGB Correlations:", encrypted_rgb_corr)
+
+
+# Plot correlation for the original image
+plot_rgb_correlation_scatter("baboon.bmp", title_prefix="Original")
+
+# Plot correlation for the encrypted image
+plot_rgb_correlation_scatter("e_baboon_ecb.bmp", title_prefix="Encrypted")
+
 
 # Compute entropy for original and encrypted images
 original_entropy = calculate_rgb_entropy("baboon.bmp")
