@@ -12,7 +12,6 @@ white_image.save("all_white.bmp")
 black_image = Image.new("RGB", (256, 256), (0, 0, 0))  # 256x256 black image
 black_image.save("all_black.bmp")
 
-from Crypto.Cipher import AES
 
 def encrypt_ecb(input_path, output_path, key):
     # Load the image
