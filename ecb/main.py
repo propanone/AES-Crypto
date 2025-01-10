@@ -6,6 +6,7 @@ from collections import Counter
 import os
 from datetime import datetime
 import glob
+import math
 
 class ImageEncryptionAnalyzer:
     def __init__(self, key: bytes = b"aaaabbbbccccdddd", iv: bytes = b"1111222233334444"):
@@ -178,6 +179,30 @@ class ImageEncryptionAnalyzer:
             entropy[color] = -np.sum(prob * np.log2(prob + 1e-10))
             
         return entropy
+    
+    def calculate_psnr(self,image1_path, image2_path):
+        # Load the images
+        img1 = np.array(Image.open(image1_path), dtype=np.float32)
+        img2 = np.array(Image.open(image2_path), dtype=np.float32)
+        
+        # Check if dimensions match
+        if img1.shape != img2.shape:
+            raise ValueError("Images must have the same dimensions for PSNR calculation.")
+        
+        # Calculate Mean Squared Error (MSE)
+        mse = np.mean((img1 - img2) ** 2)
+        
+        # Handle special case where MSE is zero (identical images)
+        if mse == 0:
+            return float('inf')  # Infinite PSNR (perfect match)
+        
+        # Calculate PSNR
+        max_pixel_value = 255.0  # For 8-bit images
+        psnr = 10 * math.log10((max_pixel_value ** 2) / mse)
+        
+        return psnr
+
+
 
 
 
@@ -246,6 +271,10 @@ def main():
     npcr_value = analyzer.calculate_npcr(encrypted_image_path, encrypted_modified_image_path)
     uaci_value = analyzer.calculate_uaci(encrypted_image_path, encrypted_modified_image_path)
     
+
+    # Calculate PSNR
+    psnr = analyzer.calculate_psnr(original_image_path, encrypted_image_path)
+
     # Calculate entropy
     original_entropy = analyzer.calculate_entropy("baboon.bmp")
     encrypted_entropy = analyzer.calculate_entropy(
@@ -260,7 +289,8 @@ def main():
         f.write("1. Differential Analysis\n")
         f.write(f"NPCR: {npcr_value:.4f}% (Expected: >99.5%)\n")
         f.write(f"UACI: {uaci_value:.4f}% (Expected: ~33.4633%)\n\n")
-        
+        f.write(f"PSNR: {psnr:.4f} dB\n\n")        
+
         f.write("2. Original Image Correlation\n")
         for key, value in original_corr.items():
             f.write(f"{key}: {value:.4f}\n")
