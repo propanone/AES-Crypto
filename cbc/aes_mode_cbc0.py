@@ -138,12 +138,12 @@ def calculate_rgb_entropy(image_path):
 # Function to create a modified image
 def create_modified_image(image_path, output_path):
     img = Image.open(image_path)
-    img_array = np.array(img)
+    img_array = np.array(img, dtype=np.uint8)
 
     # Modify one pixel (flip the top-left corner)
-    img_array[0, 0, 0] = (img_array[0, 0, 0] + 1) % 256  # R channel
-    img_array[0, 0, 1] = (img_array[0, 0, 1] + 1) % 256  # G channel
-    img_array[0, 0, 2] = (img_array[0, 0, 2] + 1) % 256  # B channel
+    img_array[0, 0, 0] = np.uint8(int(img_array[0, 0, 0] + 1) % 256)  # R channel
+    img_array[0, 0, 1] = np.uint8(int(img_array[0, 0, 1] + 1) % 256)  # G channel
+    img_array[0, 0, 2] = np.uint8(int(img_array[0, 0, 2] + 1) % 256)  # B channel
 
     # Save the modified image
     modified_img = Image.fromarray(img_array)
