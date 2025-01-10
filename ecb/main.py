@@ -11,8 +11,7 @@ import math
 class ImageEncryptionAnalyzer:
     def __init__(self, key: bytes = b"aaaabbbbccccdddd", iv: bytes = b"1111222233334444"):
         self.key = key
-        self.iv = iv
-        self.mode = AES.MODE_CBC
+        self.mode = AES.MODE_ECB
         self.results_dir = self._create_results_directory()
 
     def _create_results_directory(self) -> str:
@@ -32,7 +31,7 @@ class ImageEncryptionAnalyzer:
 
     def init_cipher(self) -> AES:
         """Initialize AES cipher."""
-        cipher = AES.new(self.key, self.mode, self.iv)
+        cipher = AES.new(self.key, self.mode)
         return cipher
 
     def process_file(self, filename: str) -> bytes:
@@ -49,56 +48,107 @@ class ImageEncryptionAnalyzer:
     def get_padding(self, block: bytes) -> int:
         """Calculate padding for AES block size."""
         return (len(block) % 16) * -1
-
-    def encrypt_image(self, cipher:  AES.MODE_ECB, input_path: str, output_path: str) -> None:
-        """Encrypt image using AES-CBC."""
-        block = self.process_file(input_path)
-        pad = self.get_padding(block)
-        block_trimmed = block[64:pad]
-        ciphertext = cipher.encrypt(block_trimmed)
-        ciphertext = block[0:64] + ciphertext + block[pad:]
-        self.save_file(output_path, ciphertext)
-
-
-    def decrypt_image(self, cipher: AES.MODE_ECB, input_path: str, output_path: str) -> None:
-        """Decrypt image using AES-CBC."""
-        block = self.process_file(input_path)
-        pad = self.get_padding(block)
-        block_trimmed = block[64:pad]
-        plaintext = cipher.decrypt(block_trimmed)
-        plaintext = block[0:64] + plaintext + block[pad:]
-        self.save_file(output_path, plaintext)
-
-    def calculate_npcr(self, image1_path: str, image2_path: str) -> float:
-        """Calculate NPCR between two images."""
-        img1 = np.array(Image.open(image1_path))
-        img2 = np.array(Image.open(image2_path))
-        diff = np.sum(img1 != img2)
-        total_pixels = img1.shape[0] * img1.shape[1] * img1.shape[2]
-        npcr = (diff / total_pixels) * 100
-        return npcr
-
-    def calculate_uaci(self, image1_path: str, image2_path: str) -> float:
-        """Calculate UACI between two images."""
-        img1 = np.array(Image.open(image1_path), dtype=np.float32)
-        img2 = np.array(Image.open(image2_path), dtype=np.float32)
-        diff = np.abs(img1 - img2)
-        uaci = np.sum(diff) / (img1.shape[0] * img1.shape[1] * img1.shape[2] * 255) * 100
-        return uaci
+    
+    def encrypt_image(self, cipher: AES.MODE_ECB, input_path: str, output_path: str) -> None:
+        """Encrypt image using AES-ECB."""
+        # Read image as raw bytes
+        with open(input_path, 'rb') as f:
+            img_data = f.read()
+        
+        # Skip BMP header (54 bytes) if it's a BMP file
+        if input_path.lower().endswith('.bmp'):
+            header = img_data[:54]
+            data = img_data[54:]
+        else:
+            header = b''
+            data = img_data
+        
+        # Ensure data length is multiple of 16 (AES block size)
+        padding_length = (16 - (len(data) % 16)) % 16
+        padded_data = data + bytes([padding_length] * padding_length)
+        
+        # Encrypt the data
+        encrypted_data = b''
+        for i in range(0, len(padded_data), 16):
+            block = padded_data[i:i+16]
+            encrypted_block = cipher.encrypt(block)
+            encrypted_data += encrypted_block
+        
+        # Write the encrypted image
+        with open(output_path, 'wb') as f:
+            f.write(header + encrypted_data[:len(data)])  # Remove padding before saving
 
     def create_modified_image(self, image_path: str, output_path: str) -> None:
         """Create a modified version of the image."""
-        img = Image.open(image_path)
-        img_array = np.array(img, dtype=np.uint8)
-        # Modify one pixel (flip the top-left corner)
-        img_array[0, 0, 0] = np.uint8(int(img_array[0, 0, 0] + 1) % 256)  # R channel
-        img_array[0, 0, 1] = np.uint8(int(img_array[0, 0, 1] + 1) % 256)  # G channel
-        img_array[0, 0, 2] = np.uint8(int(img_array[0, 0, 2] + 1) % 256)  # B channel
+        with open(image_path, 'rb') as f:
+            data = bytearray(f.read())
+        
+        # If BMP, start after header
+        start_pos = 54 if image_path.lower().endswith('.bmp') else 0
+        
+        # Modify every 16th byte (one byte per block)
+        for i in range(start_pos, len(data), 16):
+            if i < len(data):
+                data[i] = (data[i] + 1) % 256
+        
+        with open(output_path, 'wb') as f:
+            f.write(data)
 
-        # Save the modified image
-        modified_img = Image.fromarray(img_array)
-        modified_img.save(output_path)
+    def calculate_npcr(self, image1_path: str, image2_path: str) -> float:
+        """Calculate NPCR between two encrypted images."""
+        with open(image1_path, 'rb') as f1, open(image2_path, 'rb') as f2:
+            data1 = f1.read()
+            data2 = f2.read()
+        
+        # Skip headers if BMP
+        start_pos = 54 if image1_path.lower().endswith('.bmp') else 0
+        data1 = data1[start_pos:]
+        data2 = data2[start_pos:]
+        
+        # Count different bytes
+        diff_count = sum(1 for a, b in zip(data1, data2) if a != b)
+        total_bytes = len(data1)
+        
+        return (diff_count / total_bytes) * 100
 
+    def calculate_uaci(self, image1_path: str, image2_path: str) -> float:
+        """Calculate UACI between two encrypted images."""
+        with open(image1_path, 'rb') as f1, open(image2_path, 'rb') as f2:
+            data1 = f1.read()
+            data2 = f2.read()
+        
+        # Skip headers if BMP
+        start_pos = 54 if image1_path.lower().endswith('.bmp') else 0
+        data1 = data1[start_pos:]
+        data2 = data2[start_pos:]
+        
+        # Calculate absolute differences
+        diff_sum = sum(abs(a - b) for a, b in zip(data1, data2))
+        total_bytes = len(data1)
+        
+        return (diff_sum / (total_bytes * 255)) * 100
+
+    def decrypt_image(self, cipher: AES.MODE_ECB, input_path: str, output_path: str) -> None:
+        """Decrypt image using AES-ECB."""
+        # Read the encrypted image
+        img = np.array(Image.open(input_path))
+        
+        # Convert to bytes and decrypt
+        decrypted = cipher.decrypt(img.tobytes())
+        
+        # Remove padding if present
+        if len(decrypted) > 0:
+            padding_length = decrypted[-1]
+            if padding_length > 0:
+                decrypted = decrypted[:-padding_length]
+        
+        # Convert back to numpy array
+        decrypted_array = np.frombuffer(decrypted, dtype=np.uint8).reshape(img.shape)
+        
+        # Save decrypted image
+        Image.fromarray(decrypted_array).save(output_path)
+   
+    
     def plot_correlation_analysis(self, image_path: str, title: str, samples: int = 5000) -> dict:
         """Plot and calculate pixel correlation in all directions."""
         img = np.array(Image.open(image_path))
@@ -202,17 +252,9 @@ class ImageEncryptionAnalyzer:
         
         return psnr
 
-
-
-
-
 def main():
     # Initialize the analyzer
     analyzer = ImageEncryptionAnalyzer()
-
-    # Find the most recent results directory
-    results_dir =  analyzer.results_dir
-    results_dir = max(glob.glob("results_*/images"), key=os.path.getctime)
 
     print("Starting image encryption analysis...")
 
@@ -220,30 +262,27 @@ def main():
     if not os.path.exists("baboon.bmp"):
         Image.open("baboon.png").save("baboon.bmp", format="BMP")
 
-    # Construct file paths
+    # Process original image
     original_image_path = "baboon.bmp"
-    encrypted_image_path = os.path.join(results_dir, "e_baboon_cbc.bmp")
-    modified_image_path = os.path.join(results_dir, "baboon_modified.bmp")
-    encrypted_modified_image_path = os.path.join(results_dir, "e_baboon_modified_cbc.bmp")
-
-    # Process images
-    # Initialize cipher
-    cipher = analyzer.init_cipher()
-
-    # Encrypt original image
+    encrypted_image_path = os.path.join(analyzer.results_dir, "images", "encrypted_baboon.bmp")
+    modified_image_path = os.path.join(analyzer.results_dir, "images", "modified_baboon.bmp")
+    encrypted_modified_image_path = os.path.join(analyzer.results_dir, "images", "encrypted_modified_baboon.bmp")
     
-    print("Encrypting original image...")
-    analyzer.encrypt_image(cipher, original_image_path, encrypted_image_path)
+    # Create a fresh cipher for each encryption
+    cipher1 = analyzer.init_cipher()
+    cipher2 = analyzer.init_cipher()
 
-
+    # Create modified image first
     print("Creating modified image...")
     analyzer.create_modified_image(original_image_path, modified_image_path)
-
+    
+    # Encrypt both images
+    print("Encrypting original image...")
+    analyzer.encrypt_image(cipher1, original_image_path, encrypted_image_path)
     
     print("Encrypting modified image...")
-    analyzer.encrypt_image(cipher, modified_image_path, encrypted_modified_image_path)
+    analyzer.encrypt_image(cipher2, modified_image_path, encrypted_modified_image_path)
     
-
     #Analysis
     print("\nAnalyzing original image...")
     original_corr = analyzer.plot_correlation_analysis("baboon.bmp", 

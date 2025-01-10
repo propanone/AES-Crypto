@@ -1,0 +1,40 @@
+Image Encryption Analysis Results
+================================
+
+1. Differential Analysis
+NPCR: 99.6100% (Expected: >99.5%)
+UACI: 33.4966% (Expected: ~33.4633%)
+
+PSNR: 8.7683 dB
+
+2. Original Image Correlation
+R_Horizontal: 0.9187
+R_Vertical: 0.8594
+R_Diagonal: 0.8583
+G_Horizontal: 0.8709
+G_Vertical: 0.7566
+G_Diagonal: 0.7341
+B_Horizontal: 0.9016
+B_Vertical: 0.8819
+B_Diagonal: 0.8406
+
+3. Encrypted Image Correlation
+R_Horizontal: -0.0046
+R_Vertical: -0.0282
+R_Diagonal: 0.0028
+G_Horizontal: -0.0117
+G_Vertical: 0.0021
+G_Diagonal: 0.0335
+B_Horizontal: 0.0009
+B_Vertical: -0.0023
+B_Diagonal: 0.0046
+
+4. Original Image Entropy
+R: 7.7067
+G: 7.4744
+B: 7.7522
+
+5. Encrypted Image Entropy
+R: 7.9993
+G: 7.9993
+B: 7.9992

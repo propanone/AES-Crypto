@@ -13,6 +13,9 @@ class ImageEncryptionAnalyzer:
     def __init__(self, key: bytes = b"aaaabbbbccccdddd", iv: bytes = b"1111222233334444"):
         self.key = key
         self.iv = iv
+        # AES.MODE_CBC
+        # AES.MODE_OFB
+        # AES.MODE_CFB
         self.mode = AES.MODE_CBC
         self.results_dir = self._create_results_directory()
 
