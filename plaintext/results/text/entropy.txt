@@ -3,3 +3,5 @@ Original Image Entropy (R, G, B):
 
 Encrypted Image Entropy (CBC, R, G, B):
 {'R': np.float64(7.997205386235343), 'G': np.float64(7.9974300998777785), 'B': np.float64(7.997137545335541)}
+Encrypted Image Entropy (ECB, R, G, B):
+{'R': np.float64(4.000848433747973), 'G': np.float64(4.000848433747973), 'B': np.float64(4.000994038978479)}

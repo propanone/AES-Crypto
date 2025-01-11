@@ -135,6 +135,9 @@ encrypt_cbc(cipher_cbc, input_black, "results/encrypted/encrypted_black_cbc.bmp"
 encrypt_ecb(input_white, "results/encrypted/encrypted_white_ecb.bmp", key)
 encrypt_ecb(input_black, "results/encrypted/encrypted_black_ecb.bmp", key)
 
+# Plot histograms for original images
+plot_histogram(input_white, "Histogram of All-White Image", "results/plots/all_white.png")
+plot_histogram(input_black, "Histogram of All-Black Image", "results/plots/all_black.png")
 # Plot histograms for encrypted images (CBC mode)
 plot_histogram("results/encrypted/encrypted_white_cbc.bmp", "Histogram of Encrypted All-White Image (CBC)", "results/plots/encrypted_white_cbc.png")
 plot_histogram("results/encrypted/encrypted_black_cbc.bmp", "Histogram of Encrypted All-Black Image (CBC)", "results/plots/encrypted_black_cbc.png")
@@ -146,21 +149,27 @@ plot_histogram("results/encrypted/encrypted_black_ecb.bmp", "Histogram of Encryp
 # Calculate and write correlations to a text file
 original_correlation = calculate_rgb_correlation(input_white)
 encrypted_correlation_cbc = calculate_rgb_correlation("results/encrypted/encrypted_white_cbc.bmp")
+encrypted_correlation_ecb = calculate_rgb_correlation("results/encrypted/encrypted_white_ecb.bmp")
 
 with open("results/text/correlations.txt", "w") as f:
     f.write("Original RGB Correlations:\n")
     f.write(str(original_correlation) + "\n\n")
     f.write("Encrypted RGB Correlations (CBC):\n")
     f.write(str(encrypted_correlation_cbc) + "\n")
+    f.write("Encrypted RGB Correlations (ECB):\n")
+    f.write(str(encrypted_correlation_ecb) + "\n")
 
 # Calculate and write entropy to a text file
 original_entropy = calculate_rgb_entropy(input_white)
 encrypted_entropy_cbc = calculate_rgb_entropy("results/encrypted/encrypted_white_cbc.bmp")
+emcrypted_entropy_ecb = calculate_rgb_entropy("results/encrypted/encrypted_white_ecb.bmp")
 
 with open("results/text/entropy.txt", "w") as f:
     f.write("Original Image Entropy (R, G, B):\n")
     f.write(str(original_entropy) + "\n\n")
     f.write("Encrypted Image Entropy (CBC, R, G, B):\n")
     f.write(str(encrypted_entropy_cbc) + "\n")
+    f.write("Encrypted Image Entropy (ECB, R, G, B):\n")
+    f.write(str(emcrypted_entropy_ecb) + "\n")
 
 print("All tasks completed successfully. Results saved in the 'results' directory.")

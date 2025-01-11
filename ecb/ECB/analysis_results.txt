@@ -8,26 +8,26 @@ UACI: 33.4966% (Expected: ~33.4633%)
 PSNR: 8.7683 dB
 
 2. Original Image Correlation
-R_Horizontal: 0.9187
-R_Vertical: 0.8594
-R_Diagonal: 0.8583
-G_Horizontal: 0.8709
-G_Vertical: 0.7566
-G_Diagonal: 0.7341
-B_Horizontal: 0.9016
-B_Vertical: 0.8819
-B_Diagonal: 0.8406
+R_Horizontal: 0.9167
+R_Vertical: 0.8680
+R_Diagonal: 0.8561
+G_Horizontal: 0.8648
+G_Vertical: 0.7634
+G_Diagonal: 0.7433
+B_Horizontal: 0.9138
+B_Vertical: 0.8750
+B_Diagonal: 0.8395
 
 3. Encrypted Image Correlation
-R_Horizontal: -0.0046
-R_Vertical: -0.0282
-R_Diagonal: 0.0028
-G_Horizontal: -0.0117
-G_Vertical: 0.0021
-G_Diagonal: 0.0335
-B_Horizontal: 0.0009
-B_Vertical: -0.0023
-B_Diagonal: 0.0046
+R_Horizontal: -0.0152
+R_Vertical: 0.0023
+R_Diagonal: -0.0019
+G_Horizontal: 0.0030
+G_Vertical: 0.0014
+G_Diagonal: -0.0093
+B_Horizontal: -0.0050
+B_Vertical: 0.0357
+B_Diagonal: 0.0240
 
 4. Original Image Entropy
 R: 7.7067

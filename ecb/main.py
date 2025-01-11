@@ -11,7 +11,8 @@ import math
 class ImageEncryptionAnalyzer:
     def __init__(self, key: bytes = b"aaaabbbbccccdddd", iv: bytes = b"1111222233334444"):
         self.key = key
-        self.mode = AES.MODE_ECB
+        # CTR can be added here!
+        self.mode = AES.MODE_CTR
         self.results_dir = self._create_results_directory()
 
     def _create_results_directory(self) -> str:
