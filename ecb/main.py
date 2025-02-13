@@ -12,7 +12,7 @@ class ImageEncryptionAnalyzer:
     def __init__(self, key: bytes = b"aaaabbbbccccdddd", iv: bytes = b"1111222233334444"):
         self.key = key
         # CTR can be added here!
-        self.mode = AES.MODE_CTR
+        self.mode = AES.MODE_ECB
         self.results_dir = self._create_results_directory()
 
     def _create_results_directory(self) -> str:
